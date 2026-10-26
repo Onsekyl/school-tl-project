@@ -1,1 +1,1 @@
-# school-telecom-project
+# school-tl-project
