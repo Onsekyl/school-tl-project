@@ -7,7 +7,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/adc.h>
 
-/* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS 1000
 
 #define ADC_NODE DT_NODELABEL(adc)
