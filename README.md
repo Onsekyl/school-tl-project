@@ -1,5 +1,26 @@
-Nrf5340DK Raspberry Pi Machine Learning Project
+# Telecommunication and Machine Learning Project
+> [!IMPORTANT]
+> IN PROGRESS
 
+1. Collect acceleration data with GY-61 ADXL335 accelerometer and Nordic Semiconductor's nRF5340DK dev kit.
+2. Send the data to Raspberry Pi 3 using Bluetooth Low Energy.
+3. Raspberry Pi 3 forwards the data to a MySQL database which is located at the linux server in a campus network.
+4. Fetch the collected orientation/acceleration data to a PC and use it for machine learning (Python, K-Means algorithm).
+5. The end goal for the model is to recognise the correct orientation from the data.
 
-In this project we collect acceleration data with nrf5340DK send it using bluetooth low energy to a Raspberry Pi 3, Raspberry Pi works like as a gate to a network where a linux server is and in the linux server there's a MySQL database where the acceleration data is stored. Client PC can retrieve this data and use it for a K-Means machine learning algorithm
+# Architecture
+TODO: INSERT THE FINAL ARCHITECTURE DIAGRAM
+
+# Core Components
+- Nordic Semiconductor's nRF5340DK
+- Raspberry Pi 3
+- GY-61 ADXL335 accelerometer
+- Linux server with the MySQL database
+- End PC for the machine learning work
+
+# Used Telecommunication Protocols
+- Bluetooth Low Energy
+- TCP over HTTP
+- Ethernet
+- Wi-Fi (end PC connection to the campus network)
 
