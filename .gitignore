@@ -1,3 +1,5 @@
+build/
+
 # draw.io helper files
 *drawio.bkp
 *drawio.dtmp
