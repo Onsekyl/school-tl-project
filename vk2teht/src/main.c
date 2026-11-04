@@ -38,12 +38,14 @@ LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
 #define PRIORITY 7
 
 #define RUN_LED_BLINK_INTERVAL 1000
-/* STEP 17 - Define the interval at which you want to send data at */
-#define NOTIFY_INTERVAL 500
+#define BURST_POLL_INTERVAL 250
 static bool app_button_state;
 static struct k_work adv_work;
 
 uint16_t dir = 0;
+
+#define BURST_MEASUREMENTS 100
+bool burst_measure = false;
 
 /* STEP 15 - Define the data you want to stream over Bluetooth LE */
 static const struct bt_data ad[] = {
@@ -87,17 +89,39 @@ static bool app_button_cb(void)
 	return app_button_state;
 }
 
-/* STEP 18.1 - Define the thread function  */
+// Polls burst_measure periodically
 void send_data_thread(void)
 {
 	struct Measurement accelerometer;
-	while (1) {
-		accelerometer = readADCValue();
-		// printk("ADC reading: x: %d, y: %d, z: %d\n", accelerometer.x, accelerometer.y, accelerometer.z);
-		/* Send notification, the function sends notifications only if a client is subscribed */
-		my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z , dir);
-		k_sleep(K_MSEC(NOTIFY_INTERVAL));
+	while (1)
+	{
+		if (burst_measure)
+		{
+			for (int i = 0; i < BURST_MEASUREMENTS; i++)
+			{
+				accelerometer = readADCValue();
+				// printk("ADC reading #%d: x: %d, y: %d, z: %d\n", i + 1, accelerometer.x, accelerometer.y, accelerometer.z);
+
+				int err = my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z, dir);
+				if (err < 0)
+				{
+					printk("Failed to send ADC measurement to subscribers: %d\n", err);
+				}
+			}
+
+			burst_measure = false;
+			printk("\t100 accelerometer measurements sent\n");
+		}
+
+		k_sleep(K_MSEC(BURST_POLL_INTERVAL));
 	}
+	// while (1) {
+	// 	accelerometer = readADCValue();
+	// 	// printk("ADC reading: x: %d, y: %d, z: %d\n", accelerometer.x, accelerometer.y, accelerometer.z);
+	// 	/* Send notification, the function sends notifications only if a client is subscribed */
+	// 	my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z , dir);
+	// 	k_sleep(K_MSEC(NOTIFY_INTERVAL));
+	// }
 }
 
 static struct my_lbs_cb app_callbacks = {
@@ -122,6 +146,15 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 		/* STEP 6 - Send indication on a button press */
 		my_lbs_send_button_state_indicate(dir_button_state);
 		app_button_state = dir_button_state ? true : false;
+	}
+	else if (has_changed & BURST_BUTTON) {
+		uint32_t burst_button_state = button_state & BURST_BUTTON;
+
+		if (burst_button_state)
+		{
+			burst_measure = true;
+			printk("BURST_BUTTON pressed, sending 100 accelerometer measurements to subscribers\n");
+		}
 	}
 }
 static void on_connected(struct bt_conn *conn, uint8_t err)
