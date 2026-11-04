@@ -99,8 +99,6 @@ void send_data_thread(void)
 	{
 		if (burst_measure)
 		{
-			burst_measure = false;
-			
 			/* Timestamps shows that 100 measurements took about
 			 * 0.02225 s -> (1/0.02225) * 100 = 4494, so is
 			 * possible measurements in one second about 4400? */
@@ -110,7 +108,7 @@ void send_data_thread(void)
 				measurements[i] = readADCValue();
 			}
 			// LOG_INF("Measurements done");
-			
+
 			for (int i = 0; i < BURST_MEASUREMENTS; i++)
 			{
 				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, measurements[i].x, measurements[i].y, measurements[i].z, dir);
@@ -120,7 +118,8 @@ void send_data_thread(void)
 					printk("Failed to send ADC measurement: %d\n", err);
 				}
 			}
-
+			
+			burst_measure = false;
 			printk("\t100 accelerometer measurements sent\n");
 		}
 
@@ -161,7 +160,7 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 	else if (has_changed & BURST_BUTTON) {
 		uint32_t burst_button_state = button_state & BURST_BUTTON;
 
-		if (burst_button_state)
+		if (burst_button_state && !burst_measure)
 		{
 			burst_measure = true;
 			printk("BURST_BUTTON pressed, sending 100 accelerometer measurements to subscribers\n");
