@@ -89,22 +89,32 @@ static bool app_button_cb(void)
 	return app_button_state;
 }
 
+// Moving this inside send_data_thread creates a stack overflow
+struct Measurement measurements[BURST_MEASUREMENTS];
+
 // Polls burst_measure periodically
 void send_data_thread(void)
 {
-	struct Measurement accelerometer;
 	while (1)
 	{
 		if (burst_measure)
 		{
 			burst_measure = false;
 			
+			/* Timestamps shows that 100 measurements took about
+			 * 0.02225 s -> (1/0.02225) * 100 = 4494, so is
+			 * possible measurements in one second about 4400? */
+			// LOG_INF("Starting measurements");
 			for (int i = 0; i < BURST_MEASUREMENTS; i++)
 			{
-				accelerometer = readADCValue();
-				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, accelerometer.x, accelerometer.y, accelerometer.z, dir);
-
-				int err = my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z, dir);
+				measurements[i] = readADCValue();
+			}
+			// LOG_INF("Measurements done");
+			
+			for (int i = 0; i < BURST_MEASUREMENTS; i++)
+			{
+				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, measurements[i].x, measurements[i].y, measurements[i].z, dir);
+				int err = my_lbs_send_sensor_notify(measurements[i].x, measurements[i].y, measurements[i].z, dir);
 				if (err < 0)
 				{
 					printk("Failed to send ADC measurement: %d\n", err);
