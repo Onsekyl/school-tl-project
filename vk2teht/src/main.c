@@ -12,6 +12,7 @@
 #include <zephyr/bluetooth/conn.h>
 #include <dk_buttons_and_leds.h>
 #include "my_lbs.h"
+#include "adc.h"
 
 static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	(BT_LE_ADV_OPT_CONN |
@@ -75,6 +76,7 @@ static void recycled_cb(void)
 	printk("Connection object available from previous conn. Disconnect is complete!\n");
 	advertising_start();
 }
+
 /* STEP 16 - Define a function to simulate the data */
 static void simulate_data(void)
 {
@@ -102,11 +104,17 @@ static bool app_button_cb(void)
 /* STEP 18.1 - Define the thread function  */
 void send_data_thread(void)
 {
+	struct Measurement accelerometer;
+
 	while (1) {
 		/* Simulate data */
-		simulate_data();
+		// simulate_data();
+
+		// Why assigning the adc values makes the build not work!!!
+		// accelerometer = readADCValue();
+
 		/* Send notification, the function sends notifications only if a client is subscribed */
-		my_lbs_send_sensor_notify(x, y, z, dir);
+		my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z, dir);
 
 		k_sleep(K_MSEC(NOTIFY_INTERVAL));
 	}
