@@ -11,6 +11,7 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/conn.h>
 #include <dk_buttons_and_leds.h>
+#include <string.h>
 #include "my_lbs.h"
 #include "adc.h"
 
@@ -30,6 +31,8 @@ LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
 #define CON_STATUS_LED DK_LED2
 #define USER_LED DK_LED3
 #define USER_BUTTON DK_BTN1_MSK
+#define DIR_BUTTON DK_BTN2_MSK
+#define BURST_BUTTON DK_BTN3_MSK
 
 #define STACKSIZE 1024
 #define PRIORITY 7
@@ -102,22 +105,23 @@ static struct my_lbs_cb app_callbacks = {
 	.button_cb = app_button_cb,
 };
 
+char direction_name[6][8] = {"x down", "x up", "y down", "y up", "z down", "z up"};
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
 	// printk("button_changed called with state: %d and has_changed: %d\n", button_state, has_changed);
 
-	if (has_changed & USER_BUTTON) {
-		uint32_t user_button_state = button_state & USER_BUTTON;
+	if (has_changed & DIR_BUTTON) {
+		uint32_t dir_button_state = button_state & DIR_BUTTON;
 
-		if (user_button_state)
+		if (dir_button_state)
 		{
 			dir = (dir >= 5) ? 0 : ++dir;
-			printk("Button pressed, dir changed to: %d\n", dir);
+			printk("DIR_BUTTON pressed, direction changed to: %d -> %s\n", dir, direction_name[dir]);
 		}
 
 		/* STEP 6 - Send indication on a button press */
-		my_lbs_send_button_state_indicate(user_button_state);
-		app_button_state = user_button_state ? true : false;
+		my_lbs_send_button_state_indicate(dir_button_state);
+		app_button_state = dir_button_state ? true : false;
 	}
 }
 static void on_connected(struct bt_conn *conn, uint8_t err)
