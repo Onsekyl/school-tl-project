@@ -47,10 +47,10 @@ typedef void (*led_cb_t)(const bool led_state);
 typedef bool (*button_cb_t)(void);
 
 struct sensor_packet {
-    uint32_t x;
-    uint32_t y;
-    uint32_t z;
-	uint32_t dir;
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+	uint16_t dir;
 } __packed;
 
 
@@ -111,7 +111,7 @@ int my_lbs_send_button_state_notify(bool button_state);
  * @retval 0 If the operation was successful.
  *           Otherwise, a (negative) error code is returned.
  */
-int my_lbs_send_sensor_notify(uint32_t x,uint32_t y, uint32_t z, uint32_t dir);
+int my_lbs_send_sensor_notify(uint16_t x,uint16_t y, uint16_t z, uint16_t dir);
 
 #ifdef __cplusplus
 }

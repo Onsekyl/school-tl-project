@@ -40,12 +40,9 @@ LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
 static bool app_button_state;
 static struct k_work adv_work;
 
-static uint32_t x = 100;
-static uint32_t y = 200;
-static uint32_t z = 300;
-static uint32_t dir = 300;
-/* STEP 15 - Define the data you want to stream over Bluetooth LE */
+uint16_t dir = 0;
 
+/* STEP 15 - Define the data you want to stream over Bluetooth LE */
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
@@ -77,20 +74,6 @@ static void recycled_cb(void)
 	advertising_start();
 }
 
-/* STEP 16 - Define a function to simulate the data */
-static void simulate_data(void)
-{
-	x++;
-    y++;
-    z++;
-	dir++;
-    if (x == 200) {
-        x = 100;
-        y = 200;
-        z = 300;
-		dir = 300;
-    }
-}
 static void app_led_cb(bool led_state)
 {
 	dk_set_led(USER_LED, led_state);
@@ -105,17 +88,11 @@ static bool app_button_cb(void)
 void send_data_thread(void)
 {
 	struct Measurement accelerometer;
-
 	while (1) {
-		/* Simulate data */
-		// simulate_data();
-
-		// Why assigning the adc values makes the build not work!!!
-		// accelerometer = readADCValue();
-
+		accelerometer = readADCValue();
+		// printk("ADC reading: x: %d, y: %d, z: %d\n", accelerometer.x, accelerometer.y, accelerometer.z);
 		/* Send notification, the function sends notifications only if a client is subscribed */
-		my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z, dir);
-
+		my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z , dir);
 		k_sleep(K_MSEC(NOTIFY_INTERVAL));
 	}
 }
@@ -127,8 +104,17 @@ static struct my_lbs_cb app_callbacks = {
 
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
+	// printk("button_changed called with state: %d and has_changed: %d\n", button_state, has_changed);
+
 	if (has_changed & USER_BUTTON) {
 		uint32_t user_button_state = button_state & USER_BUTTON;
+
+		if (user_button_state)
+		{
+			dir = (dir >= 5) ? 0 : ++dir;
+			printk("Button pressed, dir changed to: %d\n", dir);
+		}
+
 		/* STEP 6 - Send indication on a button press */
 		my_lbs_send_button_state_indicate(user_button_state);
 		app_button_state = user_button_state ? true : false;
@@ -189,6 +175,8 @@ int main(void)
 		printk("Button init failed (err %d)\n", err);
 		return -1;
 	}
+
+	initializeADC();
 
 	err = bt_enable(NULL);
 	if (err) {
