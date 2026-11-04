@@ -115,12 +115,13 @@ void send_data_thread(void)
 				int err = my_lbs_send_sensor_notify(measurements[i].x, measurements[i].y, measurements[i].z, dir);
 				if (err < 0)
 				{
-					printk("Failed to send ADC measurement: %d\n", err);
+					printk("\tFailed to send burst measurement: %d (index %d)\n", err, i);
+					break;
 				}
 			}
 			
 			burst_measure = false;
-			printk("\t100 accelerometer measurements sent\n");
+			printk("\tBurst measurement and send finished\n");
 		}
 
 		k_sleep(K_MSEC(BURST_POLL_INTERVAL));
@@ -163,7 +164,8 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 		if (burst_button_state && !burst_measure)
 		{
 			burst_measure = true;
-			printk("BURST_BUTTON pressed, sending 100 accelerometer measurements to subscribers\n");
+			printk("BURST_BUTTON pressed, performing and sending %d accelerometer"
+				   " measurements to subscribers...\n", BURST_MEASUREMENTS);
 		}
 	}
 }
