@@ -97,19 +97,20 @@ void send_data_thread(void)
 	{
 		if (burst_measure)
 		{
+			burst_measure = false;
+			
 			for (int i = 0; i < BURST_MEASUREMENTS; i++)
 			{
 				accelerometer = readADCValue();
-				// printk("ADC reading #%d: x: %d, y: %d, z: %d\n", i + 1, accelerometer.x, accelerometer.y, accelerometer.z);
+				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, accelerometer.x, accelerometer.y, accelerometer.z, dir);
 
 				int err = my_lbs_send_sensor_notify(accelerometer.x, accelerometer.y, accelerometer.z, dir);
 				if (err < 0)
 				{
-					printk("Failed to send ADC measurement to subscribers: %d\n", err);
+					printk("Failed to send ADC measurement: %d\n", err);
 				}
 			}
 
-			burst_measure = false;
 			printk("\t100 accelerometer measurements sent\n");
 		}
 
