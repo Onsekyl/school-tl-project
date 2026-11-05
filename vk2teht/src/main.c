@@ -18,8 +18,8 @@
 static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	(BT_LE_ADV_OPT_CONN |
 	 BT_LE_ADV_OPT_USE_IDENTITY), /* Connectable advertising and use identity address */
-	800, /* Min Advertising Interval 500ms (800*0.625ms) */
-	801, /* Max Advertising Interval 500.625ms (801*0.625ms) */
+	BT_GAP_ADV_FAST_INT_MIN_2,
+	BT_GAP_ADV_FAST_INT_MAX_2,
 	NULL); /* Set to NULL for undirected advertising */
 
 LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
@@ -169,6 +169,36 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 		}
 	}
 }
+
+static void update_phy(struct bt_conn *conn)
+{
+    int err;
+    const struct bt_conn_le_phy_param preferred_phy = {
+        .options = BT_CONN_LE_PHY_OPT_NONE,
+        .pref_rx_phy = BT_GAP_LE_PHY_2M,
+        .pref_tx_phy = BT_GAP_LE_PHY_2M,
+    };
+
+    err = bt_conn_le_phy_update(conn, &preferred_phy);
+    if (err) {
+        LOG_ERR("bt_conn_le_phy_update() returned %d", err);
+    }
+}
+
+void on_le_phy_updated(struct bt_conn *conn, struct bt_conn_le_phy_info *param)
+{
+    // PHY Updated
+    if (param->tx_phy == BT_CONN_LE_TX_POWER_PHY_1M) {
+        LOG_INF("PHY updated. New PHY: 1M");
+    }
+    else if (param->tx_phy == BT_CONN_LE_TX_POWER_PHY_2M) {
+        LOG_INF("PHY updated. New PHY: 2M");
+    }
+    else if (param->tx_phy == BT_CONN_LE_TX_POWER_PHY_CODED_S8) {
+        LOG_INF("PHY updated. New PHY: Long Range");
+    }
+}
+
 static void on_connected(struct bt_conn *conn, uint8_t err)
 {
 	if (err) {
@@ -177,8 +207,8 @@ static void on_connected(struct bt_conn *conn, uint8_t err)
 	}
 
 	printk("Connected\n");
-
 	dk_set_led_on(CON_STATUS_LED);
+	update_phy(conn);
 }
 
 static void on_disconnected(struct bt_conn *conn, uint8_t reason)
@@ -192,12 +222,12 @@ struct bt_conn_cb connection_callbacks = {
 	.connected = on_connected,
 	.disconnected = on_disconnected,
 	.recycled = recycled_cb,
+	.le_phy_updated = on_le_phy_updated,
 };
 
 static int init_button(void)
 {
 	int err;
-
 	err = dk_buttons_init(button_changed);
 	if (err) {
 		printk("Cannot init buttons (err: %d)\n", err);
