@@ -32,7 +32,8 @@ LOG_MODULE_REGISTER(Lesson4_Exercise2, LOG_LEVEL_INF);
 #define USER_LED DK_LED3
 #define USER_BUTTON DK_BTN1_MSK
 #define DIR_BUTTON DK_BTN2_MSK
-#define BURST_BUTTON DK_BTN3_MSK
+#define BURST_100_BUTTON DK_BTN3_MSK
+#define BURST_1S_BUTTON DK_BTN4_MSK
 
 #define STACKSIZE 1024
 #define PRIORITY 7
@@ -44,7 +45,10 @@ static struct k_work adv_work;
 
 uint16_t dir = 0;
 
-#define BURST_MEASUREMENTS 100
+#define BURST_100 100
+#define BURST_1S 4400
+
+int burst_measure_amount;
 bool burst_measure = false;
 
 /* STEP 15 - Define the data you want to stream over Bluetooth LE */
@@ -90,7 +94,7 @@ static bool app_button_cb(void)
 }
 
 // Moving this inside send_data_thread creates a stack overflow
-struct Measurement measurements[BURST_MEASUREMENTS];
+struct Measurement measurements[BURST_1S];
 
 // Polls burst_measure periodically
 void send_data_thread(void)
@@ -103,13 +107,13 @@ void send_data_thread(void)
 			 * 0.02225 s -> (1/0.02225) * 100 = 4494, so is
 			 * possible measurements in one second about 4400? */
 			// LOG_INF("Starting measurements");
-			for (int i = 0; i < BURST_MEASUREMENTS; i++)
+			for (int i = 0; i < burst_measure_amount; i++)
 			{
 				measurements[i] = readADCValue();
 			}
 			// LOG_INF("Measurements done");
 
-			for (int i = 0; i < BURST_MEASUREMENTS; i++)
+			for (int i = 0; i < burst_measure_amount; i++)
 			{
 				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, measurements[i].x, measurements[i].y, measurements[i].z, dir);
 				int err = my_lbs_send_sensor_notify(measurements[i].x, measurements[i].y, measurements[i].z, dir);
@@ -146,26 +150,38 @@ static void button_changed(uint32_t button_state, uint32_t has_changed)
 	// printk("button_changed called with state: %d and has_changed: %d\n", button_state, has_changed);
 
 	if (has_changed & DIR_BUTTON) {
-		uint32_t dir_button_state = button_state & DIR_BUTTON;
+		uint32_t changed_button_state = button_state & DIR_BUTTON;
 
-		if (dir_button_state)
+		if (changed_button_state)
 		{
 			dir = (dir >= 5) ? 0 : ++dir;
 			printk("DIR_BUTTON pressed, direction changed to: %d -> %s\n", dir, direction_name[dir]);
 		}
 
 		/* STEP 6 - Send indication on a button press */
-		my_lbs_send_button_state_indicate(dir_button_state);
-		app_button_state = dir_button_state ? true : false;
+		my_lbs_send_button_state_indicate(changed_button_state);
+		app_button_state = changed_button_state ? true : false;
 	}
-	else if (has_changed & BURST_BUTTON) {
-		uint32_t burst_button_state = button_state & BURST_BUTTON;
+	else if (has_changed & BURST_100_BUTTON) {
+		uint32_t changed_button_state = button_state & BURST_100_BUTTON;
 
-		if (burst_button_state && !burst_measure)
+		if (changed_button_state && !burst_measure)
 		{
 			burst_measure = true;
+			burst_measure_amount = BURST_100;
 			printk("BURST_BUTTON pressed, performing and sending %d accelerometer"
-				   " measurements to subscribers...\n", BURST_MEASUREMENTS);
+				   " measurements to subscribers...\n", burst_measure_amount);
+		}
+	}
+	else if (has_changed & BURST_1S_BUTTON) {
+		uint32_t changed_button_state = button_state & BURST_1S_BUTTON;
+
+		if (changed_button_state && !burst_measure)
+		{
+			burst_measure = true;
+			burst_measure_amount = BURST_1S;
+			printk("BURST_BUTTON pressed, performing and sending %d accelerometer"
+				   " measurements to subscribers...\n", burst_measure_amount);
 		}
 	}
 }
