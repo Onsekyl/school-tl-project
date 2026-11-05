@@ -113,6 +113,11 @@ void send_data_thread(void)
 			}
 			// LOG_INF("Measurements done");
 
+			if (burst_measure_amount == BURST_1S)
+			{
+				dir += 10;
+			}
+
 			for (int i = 0; i < burst_measure_amount; i++)
 			{
 				// printk("ADC reading #%d: x: %d, y: %d, z: %d, dir: %d\n", i + 1, measurements[i].x, measurements[i].y, measurements[i].z, dir);
@@ -122,6 +127,11 @@ void send_data_thread(void)
 					printk("\tFailed to send burst measurement: %d (index %d)\n", err, i);
 					break;
 				}
+			}
+
+			if (burst_measure_amount == BURST_1S)
+			{
+				dir -= 10;
 			}
 			
 			burst_measure = false;
