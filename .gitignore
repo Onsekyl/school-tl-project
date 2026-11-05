@@ -6,6 +6,9 @@ build/
 *drawio.bkp
 *drawio.dtmp
 
+# Measurements received with python client
+sensordata*
+
 #PYTHONI --alku
 __pycache__/
 *.py[cod]
