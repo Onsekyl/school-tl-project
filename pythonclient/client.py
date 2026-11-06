@@ -3,9 +3,10 @@ from bleak import BleakClient
 import struct
 import csv
 import os
+import sys
 
 # MAC-address on Linux/Windows and UUID on Mac (Darwin).
-if (os.name == "Darwin"):
+if sys.platform == "darwin":
     DEVICE_ADDRESS = "3702F108-47BF-B56F-90F1-DEC4E770D39B"
 else:
     DEVICE_ADDRESS = "D0:54:CD:D8:10:18"
