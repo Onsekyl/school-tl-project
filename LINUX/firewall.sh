@@ -6,7 +6,7 @@ PATH="/usr/sbin:/sbin:/usr/bin:/bin"
 # IPv4
 #
 
-# Tyhjennetään vanhat säännöt ja asetetaan oletukset (ACCEPT)
+# Clear old rules and set defaults
 iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -P FORWARD ACCEPT
@@ -16,35 +16,40 @@ iptables -F FORWARD
 iptables -F -t nat
 iptables -F -t mangle
 
-# Paikallinen liikenne ja sallitut verkot/osoitteet
+# Local and trusted hosts and networks
 iptables -A INPUT -i lo -j ACCEPT
-iptables -A INPUT -s 172.20.240.0/23 -j ACCEPT # Esimerkki aliverkosta
-iptables -A INPUT -s 193.167.100.97 -j ACCEPT # Takaovi (students.oamk.fi)
+# iptables -A INPUT -s 172.20.240.0/23 -j ACCEPT # example how to allow whole IP network 172.20.240.xxx and 172.20.241.xxx
+iptables -A INPUT -s 193.167.100.97 -j ACCEPT # DO NOT COMMENT OR MODIFY THIS. THIS IS BACKDOOR TO YOUR SERVER FROM students.oamk.fi
 
-# Täysin avoimet palvelut
-iptables -A INPUT -p tcp --dport 22 -j ACCEPT # SSH
-iptables -A INPUT -p tcp --dport 80 -j ACCEPT # HTTP
-
-# Sallitut ICMP-paketit (ping-testausta varten)
+# ICMP (ping)
 iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 
-# Sallitaan jo aloitetut ja liittyvät yhteydet takaisin
+# Completely open services
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT # DO NOT COMMENT OR MODIFY THIS. YOU WILL KICK YOURSELF OUT FROM THE SERVER (SSH)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT # HTTP
+iptables -A INPUT -p tcp --dport 3306 -j ACCEPT # MySQL
+
+# established traffic inbound (allow return traffic back which was originated from your server)
 iptables -A INPUT -p ALL -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-# Pudotetaan muut uudet ja virheelliset saapuvat yhteydet
-iptables -A INPUT -p ALL -m conntrack --ctstate NEW,INVALID -j DROP 
+# Other SYN etc inbound
 
-# Lopullinen oletusasetus sisääntulevalle liikenteelle
+# Logging may generate too much log entries. This is commented now but left here as an example how to log:
+# iptables -A INPUT -p ALL -m conntrack --ctstate NEW,INVALID -j LOG --log-prefix "DROP NEW "
+
+# Drop all other new inbound but count dropped connections
+iptables -A INPUT -p ALL -m conntrack --ctstate NEW,INVALID -j DROP
+
+# Dropping all example:
 iptables -A INPUT -p ALL -j DROP
 
-# Ketjujen oletukset skriptin lopussa
+# Defaults
 iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -P FORWARD DROP
 
-
 #
-# IPv6 (sama logiikka)
+# IPv6 (same logic as with IPv4)
 #
 
 ip6tables -P INPUT DROP
@@ -55,9 +60,9 @@ ip6tables -F OUTPUT
 ip6tables -F FORWARD
 
 ip6tables -A INPUT -i lo -j ACCEPT
-ip6tables -A INPUT -p TCP --dport 22 -j ACCEPT 
-ip6tables -A INPUT -p icmpv6 -j ACCEPT       
-ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -p TCP --dport 22
+ip6tables -A INPUT -m state --state  ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -p icmpv6 -j ACCEPT # ICMP6  autoconfig etc router advertisements
 ip6tables -A INPUT -j DROP
 
 ip6tables -P INPUT ACCEPT
