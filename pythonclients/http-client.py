@@ -1,4 +1,4 @@
-import requests
+import requests # https://docs.python-requests.org/en/latest/user/quickstart/
 
 FIELDS_PER_ENTRY = 12
 
