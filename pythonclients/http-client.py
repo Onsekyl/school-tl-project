@@ -1,12 +1,18 @@
 import requests
 
+FIELDS_PER_ENTRY = 12
+
 payload = {'groupid': '1'}
 res = requests.get('http://172.20.241.9/luedataa_kannasta_groupid_csv.php', params=payload)
-
 format = res.text.replace('\n', ';')
 split = format.split(';')
 
-# Source - https://stackoverflow.com/a/40598286
-list = list(filter(None, split))
+i = 0
+for field in split:
+    if (i  == FIELDS_PER_ENTRY - 1):
+        print('') # Newline
+        i = 0
 
-print(list)
+    print(f"{field} ", end='')
+    i += 1
+    
