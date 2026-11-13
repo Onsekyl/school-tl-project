@@ -1,3 +1,67 @@
+
+.vscode/
+build/
+
 # draw.io helper files
 *drawio.bkp
 *drawio.dtmp
+
+# Measurements received with python client
+sensordata*
+
+#PYTHONI --alku
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtuaaliympäristöt (Virtual Environments)
+.venv/
+venv/
+ENV/
+env/
+
+# Ympäristömuuttujat ja salaisuudet (API-avaimet jne.)
+.env
+.env.local
+
+# Paketointi ja koontitiedostot (Build artifacts)
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testaus ja kattavuusraportit (Testing / Coverage)
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+
+# Koodieditorien ja käyttöjärjestelmien omat tiedostot
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+myenv/
+#PYTHONI LOPPU ------
