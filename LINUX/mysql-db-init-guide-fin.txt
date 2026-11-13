@@ -1,0 +1,85 @@
+-- HOX! Muokattu annetusta esimerkistä!
+
+-- Mennään rootiksi ja asennetaan mysql-palvelu:
+sudo bash
+apt update
+apt install mysql-server
+
+-- Tehdään kanta ja sinne taulu:
+mysql
+
+-- Tehdään mysql shellissä tietokanta:
+create database measurements;
+use measurements;
+
+-- Tehdään measurements-kantaan rawdata-niminen taulu:
+create table rawdata (
+id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+-- timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+groupid INT NOT NULL DEFAULT 0,
+-- from_mac VARCHAR(32) NOT NULL DEFAULT 0,
+-- to_mac VARCHAR(32) NOT NULL DEFAULT 0,
+sensorvalue_x INT NOT NULL DEFAULT 0,
+sensorvalue_y INT NOT NULL DEFAULT 0,
+sensorvalue_z INT NOT NULL DEFAULT 0,
+sensor_direction INT NOT NULL DEFAULT 0
+-- sensorvalue_e FLOAT NOT NULL DEFAULT 0,
+-- sensorvalue_f VARCHAR(256) NOT NULL DEFAULT 0
+);
+
+DESCRIBE rawdata;
+
+-- Tehdään käyttäjätunnukset kaikin oikeuksin (dbaccess_rw) ja vain SELECT-lukuoikeuksin (dbaccess_ro)
+-- HOX! Vaihdoin vanhetuneen mysql_native_password -> caching_sha2_password:
+CREATE USER 'dbaccess_rw'@'%' IDENTIFIED WITH caching_sha2_password BY 'rw_***'; -- *** = Se meidän perus salasana
+GRANT ALL ON measurements.* TO 'dbaccess_rw'@'%';
+
+CREATE USER 'dbaccess_ro'@'%' IDENTIFIED WITH caching_sha2_password BY 'ro_***'; -- *** = Se meidän perus salasana
+GRANT SELECT ON measurements.* TO 'dbaccess_ro'@'%';
+
+FLUSH PRIVILEGES;
+quit;
+
+-- Testataan tunnusta ja kirjoitetaan pari riviä dataa kantaan:
+mysql -u'dbaccess_rw' -p'rw_***' measurements -- *** = Se meidän perus salasana
+
+-- MySQL shellissä:
+describe rawdata;
+
+INSERT INTO rawdata (groupid, sensorvalue_x, sensorvalue_y, sensorvalue_z, sensor_direction) VALUES ('9999', '1302', '1600', '1932', '404');
+INSERT INTO rawdata (groupid, sensorvalue_x, sensorvalue_y, sensorvalue_z, sensor_direction) VALUES ('9999', '1302', '1600', '1932', '404');
+
+select * from rawdata;
+quit;
+
+
+Muuta muistettavaa:
+===================
+
+Jos on oma tietokantapalvelin käytössä virtuaalipalvelimella 172.20.241.XXX
+(eikä käytä valmista palvelinta osoitteessa 172.20.241.9) ja on tehnyt palomuuritehtävän,
+mikä suodattaa liikennettä, niin täytyy muistaa avata MySQL:n käyttämä TCP-portti siellä
+palvelimen palomuuriskriptissä ja ajaa se skripti uusiksi, jotta muutokset tulee voimaan.
+
+Lisäksi MySQL-palvelun asetuksissa pitää vaihtaa palvelu kuuntelemaan 127.0.0.1 (localhost)
+-osoitteen sijaan osoitetta 0.0.0.0 (eli kuuntelee kaikissa verkkokorteissa/IP-osoitteissa,
+mitä palvelimesta löytyy), tähän tapaan:
+
+Editoi tiedostoa esim. nano-tekstieditorilla: /etc/mysql/mysql.conf.d/mysqld.cnf
+
+Ja muuta siellä (noin rivillä 31):
+
+bind-address            = 127.0.0.1
+
+tällaiseksi:
+bind-address            = 0.0.0.0
+
+MySQL-palvelu pitää käynnistää uudestaan, jotta muutos tulee voimaan:
+
+systemctl restart mysql 
+
+Nyt MySQL-palvelu kuuntelee verkkoa ja voi lähettää Raspberryssä pyörivältä Python-ohjelmalta
+suoraan mysql-rajapintaa käyttäen dataa.
+
+
+
