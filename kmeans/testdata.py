@@ -3,35 +3,56 @@ import matplotlib.pyplot as plt
 
 testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
-wonpoints = np.zeros((6, 100, 4))
+wonpoints = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
 
-testdata[0:100,:]   = np.array([1900,1600,1600])
-testdata[100:200,:] = np.array([1300,1600,1600])
-testdata[200:300,:] = np.array([1600,1900,1600])
-testdata[300:400,:] = np.array([1600,1300,1600])
-testdata[400:500,:] = np.array([1600,1600,1900])
-testdata[500:600,:] = np.array([1600,1600,1300])
-
+# Hardcoded testdata and avgpoints for testing:
+# testdata 0-99 -> avgpoint 0, testdata 100-199 -> avgpoint 1 etc.
+testdata[0:100,:]   = np.array((1900,1600,1600))
+testdata[100:200,:] = np.array((1300,1600,1600))
+testdata[200:300,:] = np.array((1600,1900,1600))
+testdata[300:400,:] = np.array((1600,1300,1600))
+testdata[400:500,:] = np.array((1600,1600,1900))
+testdata[500:600,:] = np.array((1600,1600,1300))
 testdata += 20*np.random.randn(600, 3)
+
+# avgpoints[0,:] = np.array((1900,1600,1600))
+# avgpoints[1,:] = np.array((1300,1600,1600))
+# avgpoints[2,:] = np.array((1600,1900,1600))
+# avgpoints[3,:] = np.array((1600,1300,1600))
+# avgpoints[4,:] = np.array((1600,1600,1900))
+# avgpoints[5,:] = np.array((1600,1600,1300))
+# avgpoints += 50*np.random.randn(6, 3)
 
 
 def random_avg_points():
     MIN = 1150
     MAX = 2050
 
-    for i, p in enumerate(avgpoints):
+    for i in range(len(avgpoints)):
         point = np.array([np.random.randint(MIN, MAX),
                           np.random.randint(MIN, MAX),
                           np.random.randint(MIN, MAX)])
         avgpoints[i,:] = np.array(point)
-        #print(avgpoints[i])
+        # print(avgpoints[i])
 
-
+# https://www.geeksforgeeks.org/maths/3d-distance-formula/
 def calc_dist():
-    for i, p in enumerate(testdata):
-        for j, o in enumerate(avgpoints):
-            dist = np.sqrt(np.power(testdata[i] - avgpoints[j], 2))
-            # print(dist)
+    for i in range(len(testdata)):
+        distances = np.zeros(6)
+        for j in range(len(avgpoints)):
+            distances[j] = np.sqrt(np.sum(np.power(testdata[i] - avgpoints[j], 2)))
+
+        closest_avgpoint_i = np.argmin(distances)
+        #print(f"The closest avgpoint to measurement {i} is at index {closest_avgpoint_i}"
+        #      f" with the distance of {distances[closest_avgpoint_i]:.3f}")
+
+        wonpoints_count = int(np.max(wonpoints[closest_avgpoint_i, :, 3]))
+        # print(wonpoints_count)
+
+        # https://www.geeksforgeeks.org/python/numpy-append-python/
+        wonpoints[closest_avgpoint_i, wonpoints_count, :] = np.append(testdata[i], wonpoints_count+1)
+        print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
+              f"{wonpoints[closest_avgpoint_i, wonpoints_count, :]}")
 
 
 random_avg_points()
@@ -89,4 +110,6 @@ ax.legend()
 ax.set_box_aspect([1, 1, 1])
 
 plt.tight_layout()
-plt.show()
+
+# Linux: https://stackoverflow.com/questions/77507580/userwarning-figurecanvasagg-is-non-interactive-and-thus-cannot-be-shown-plt-sh#comment138759918_77644828
+# plt.show()
