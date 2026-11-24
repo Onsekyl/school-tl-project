@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# https://stackoverflow.com/a/2891805
+np.set_printoptions(precision = 2) # Limits the decimals to the value
+np.set_printoptions(suppress=True) # Disables scientific notation
+
 testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
-wonpoints = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
+wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
 
 # Hardcoded testdata and avgpoints for testing:
 # testdata 0-99 -> avgpoint 0, testdata 100-199 -> avgpoint 1 etc.
@@ -32,6 +36,7 @@ def random_avg_points():
         point = np.array([np.random.randint(MIN, MAX),
                           np.random.randint(MIN, MAX),
                           np.random.randint(MIN, MAX)])
+        
         avgpoints[i,:] = np.array(point)
         # print(avgpoints[i])
 
@@ -43,16 +48,27 @@ def calc_dist():
             distances[j] = np.sqrt(np.sum(np.power(testdata[i] - avgpoints[j], 2)))
 
         closest_avgpoint_i = np.argmin(distances)
-        #print(f"The closest avgpoint to measurement {i} is at index {closest_avgpoint_i}"
-        #      f" with the distance of {distances[closest_avgpoint_i]:.3f}")
+        # print(f"The closest avgpoint to measurement {i} is at index {closest_avgpoint_i}"
+        #       f" with the distance of {distances[closest_avgpoint_i]}")
 
-        wonpoints_count = int(np.max(wonpoints[closest_avgpoint_i, :, 3]))
+        wonpoints_count = int(np.max(wonpoints_cumul[closest_avgpoint_i, :, 3]))
         # print(wonpoints_count)
 
+        cumulative = np.zeros(3)
+        if (wonpoints_count > 0):
+            cumulative = testdata[i] + wonpoints_cumul[closest_avgpoint_i, wonpoints_count-1, :3]
+        elif (wonpoints_count == 0):
+            cumulative = testdata[i]
+
+        # Cumulation check
+        # if (wonpoints_count < 3 and wonpoints_count > 0):
+        #     print(f"{wonpoints_count} {testdata[i]}\n+ {wonpoints[closest_avgpoint_i, wonpoints_count-1, :3]}"
+        #           f"\n= {cumulative}\n")
+
         # https://www.geeksforgeeks.org/python/numpy-append-python/
-        wonpoints[closest_avgpoint_i, wonpoints_count, :] = np.append(testdata[i], wonpoints_count+1)
+        wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :] = np.append(cumulative, wonpoints_count+1)
         print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
-              f"{wonpoints[closest_avgpoint_i, wonpoints_count, :]}")
+              f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
 
 
 random_avg_points()
