@@ -1,43 +1,46 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-testdata = np.zeros((600,3))
+testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
-wonpoints = np.zeros((6,100,4))
+wonpoints = np.zeros((6, 100, 4))
 
-testdata[0:100,:] = np.array([1900,1600,1600])
+testdata[0:100,:]   = np.array([1900,1600,1600])
 testdata[100:200,:] = np.array([1300,1600,1600])
 testdata[200:300,:] = np.array([1600,1900,1600])
 testdata[300:400,:] = np.array([1600,1300,1600])
 testdata[400:500,:] = np.array([1600,1600,1900])
 testdata[500:600,:] = np.array([1600,1600,1300])
+
 testdata += 20*np.random.randn(600, 3)
 
-def genpoints():
+
+def random_avg_points():
+    MIN = 1150
+    MAX = 2050
+
     for i, p in enumerate(avgpoints):
-        point = np.array([np.random.randint(1150, 2050),
-                         np.random.randint(1150, 2050),
-                         np.random.randint(1150, 2050)])
+        point = np.array([np.random.randint(MIN, MAX),
+                          np.random.randint(MIN, MAX),
+                          np.random.randint(MIN, MAX)])
         avgpoints[i,:] = np.array(point)
         #print(avgpoints[i])
-genpoints()
 
-def calcdist():
+
+def calc_dist():
     for i, p in enumerate(testdata):
         for j, o in enumerate(avgpoints):
-            dist = np.power(np.exp(testdata[i] - avgpoints[j], 2))
-            print(dist)
-
-calcdist()
+            dist = np.sqrt(np.power(testdata[i] - avgpoints[j], 2))
+            # print(dist)
 
 
+random_avg_points()
+calc_dist()
 
 
 colors = [
-    'red', 'darkred',
-    'green', 'darkgreen',
-    'blue', 'darkblue',
-    'brown'
+    'red', 'darkred', 'green', 'darkgreen',
+    'blue', 'darkblue', 'brown'
 ]
 
 labels = [
@@ -62,6 +65,7 @@ for i in range(6):
         s=20,
         alpha=0.7
     )
+
 for i in range(6):
     start = i 
     end = (i + 1)
@@ -79,7 +83,7 @@ ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 
-ax.set_title('3D dot cloud')
+ax.set_title('3D Dot Cloud')
 ax.legend()
 
 ax.set_box_aspect([1, 1, 1])
