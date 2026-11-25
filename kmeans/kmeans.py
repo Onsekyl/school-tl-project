@@ -111,10 +111,34 @@ def calc_new_avg():
         print("aaaaaa",avgpoints[i, :3])
 
 
+
+def arr_2d_to_c_file(array, filename:str, arrayname:str, dtype:str):
+    d1 = array.shape[0]
+    d2 = array.shape[1]
+    # print("shapes: ", d1, d2)
+
+    with open(filename, "w", newline="", encoding="utf-8") as f:
+        # Double curly braces in f-string: https://stackoverflow.com/a/5466478
+        f.write(f"{dtype} {arrayname}[{d1}][{d2}] = {{\n\t{{")
+
+        for i in range(d1):
+            for j in range(d2):
+                f.write(f" {array[i, j]}")
+
+                # This is just formatting; works with C straight away.
+                if j < d2-1:
+                    f.write(",")
+                elif j == d2-1 and i < d1-1:
+                    f.write(" },\n\t{")
+                else:
+                    f.write(" },\n};")
+        f.close()
+
 getdata()
 random_avg_points()
 calc_dist()
 calc_new_avg()
+arr_2d_to_c_file(avgpoints, "avgpoints.h", "avgpoints", "double")
 
 colors = [
     'red', 'darkred', 'green', 'darkgreen',
