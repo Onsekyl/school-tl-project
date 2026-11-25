@@ -6,7 +6,7 @@ np.set_printoptions(precision = 2) # Limits the decimals to the value
 np.set_printoptions(suppress=True) # Disables scientific notation
 
 
-
+MIN_WON_POINTS = 75
 testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
 wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
@@ -92,7 +92,8 @@ def calc_dist():
 
     for k in range(len(avgpoints)):
         count = int(np.max(wonpoints_cumul[k, :, 3]))
-        if(count == 0):
+        if(count < MIN_WON_POINTS):
+            print(f"avgpoint {k} did not won enough points. Moving it and recalculating...")
             random_avg_point(k)
             wonpoints_cumul = np.zeros((6, len(testdata), 4)) 
             calc_dist()
