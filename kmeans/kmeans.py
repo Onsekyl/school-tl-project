@@ -38,28 +38,25 @@ def getdata():
 
 
 
-def random_avg_points():
-    MIN = 1150
-    MAX = 2050
+AXIS_MIN = 700
+AXIS_MAX = 2500
 
+def random_avg_points():
     for i in range(len(avgpoints)):
-        point = np.array([np.random.randint(MIN, MAX),
-                            np.random.randint(MIN, MAX),
-                            np.random.randint(MIN, MAX)])
+        point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
+                            np.random.randint(AXIS_MIN, AXIS_MAX),
+                            np.random.randint(AXIS_MIN, AXIS_MAX)])
     
-    avgpoints[i,:] = np.array(point)
+    avgpoints[i,:] = point
         # print(avgpoints[i])
 
 
-def random_avg_point(newavg):
-    MIN = 1150
-    MAX = 2050
-
-    point = np.array([np.random.randint(MIN, MAX),
-                        np.random.randint(MIN, MAX),
-                        np.random.randint(MIN, MAX)])
+def random_avg_point(i):
+    point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
+                        np.random.randint(AXIS_MIN, AXIS_MAX),
+                        np.random.randint(AXIS_MIN, AXIS_MAX)])
     
-    avgpoints[newavg,:] = np.array(point)
+    avgpoints[i,:] = np.array(point)
         # print(avgpoints[i])
 
 # https://www.geeksforgeeks.org/maths/3d-distance-formula/
@@ -90,8 +87,9 @@ def calc_dist():
 
         # https://www.geeksforgeeks.org/python/numpy-append-python/
         wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :] = np.append(cumulative, wonpoints_count+1)
-        print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
-              f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
+        # print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
+        #       f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
+
     for k in range(len(avgpoints)):
         count = int(np.max(wonpoints_cumul[k, :, 3]))
         if(count == 0):
@@ -108,7 +106,7 @@ def calc_new_avg():
         cumul = np.zeros(3)
         cumul = wonpoints_cumul[i, count - 1, :3]
         avgpoints[i, :] = cumul / count
-        print("aaaaaa",avgpoints[i, :3])
+        print(f"Final avgpoint {i}: {avgpoints[i, :3]} - won {count} measurements")
 
 
 
@@ -138,11 +136,15 @@ getdata()
 random_avg_points()
 calc_dist()
 calc_new_avg()
-arr_2d_to_c_file(avgpoints, "avgpoints.h", "avgpoints", "double")
+
+# !! SECRET in the name ignores the file for git.
+# Remove it from the name when actually finalizing the file.
+arr_2d_to_c_file(avgpoints, "avgpoints_secret.h", "avgpoints", "double")
+
 
 colors = [
     'red', 'darkred', 'green', 'darkgreen',
-    'blue', 'darkblue', 'brown'
+    'blue', 'darkblue', 'white', 'black'
 ]
 
 labels = [
@@ -153,6 +155,9 @@ labels = [
 
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
+
+# This along zorder field in scatters bring avgpoints in front
+ax.computed_zorder=False
 
 for i in range(6):
     start = i * 100
@@ -165,7 +170,8 @@ for i in range(6):
         c=colors[i],
         label=labels[i],
         s=20,
-        alpha=0.1
+        alpha=0.25,
+        zorder=1
     )
 
 for i in range(6):
@@ -177,8 +183,11 @@ for i in range(6):
         avgpoints[start:end, 1],
         avgpoints[start:end, 2],
         c=colors[6],
+        marker="D",
+        edgecolors=colors[7],
         s=20,
-        alpha=1
+        alpha=1,
+        zorder=10
     )
 
 ax.set_xlabel('X')
