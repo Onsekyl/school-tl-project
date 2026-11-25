@@ -5,19 +5,21 @@ import matplotlib.pyplot as plt
 np.set_printoptions(precision = 2) # Limits the decimals to the value
 np.set_printoptions(suppress=True) # Disables scientific notation
 
+
+
 testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
 wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
 
 # Hardcoded testdata and avgpoints for testing:
 # testdata 0-99 -> avgpoint 0, testdata 100-199 -> avgpoint 1 etc.
-testdata[0:100,:]   = np.array((1900,1600,1600))
-testdata[100:200,:] = np.array((1300,1600,1600))
-testdata[200:300,:] = np.array((1600,1900,1600))
-testdata[300:400,:] = np.array((1600,1300,1600))
-testdata[400:500,:] = np.array((1600,1600,1900))
-testdata[500:600,:] = np.array((1600,1600,1300))
-testdata += 20*np.random.randn(600, 3)
+# testdata[0:100,:]   = np.array((1900,1600,1600))
+# testdata[100:200,:] = np.array((1300,1600,1600))
+# testdata[200:300,:] = np.array((1600,1900,1600))
+# testdata[300:400,:] = np.array((1600,1300,1600))
+# testdata[400:500,:] = np.array((1600,1600,1900))
+# testdata[500:600,:] = np.array((1600,1600,1300))
+# testdata += 20*np.random.randn(600, 3)
 
 # avgpoints[0,:] = np.array((1900,1600,1600))
 # avgpoints[1,:] = np.array((1300,1600,1600))
@@ -26,6 +28,14 @@ testdata += 20*np.random.randn(600, 3)
 # avgpoints[4,:] = np.array((1600,1600,1900))
 # avgpoints[5,:] = np.array((1600,1600,1300))
 # avgpoints += 50*np.random.randn(6, 3)
+
+def getdata():
+    global testdata
+    for i in range(6):
+        start = 100 * i
+        end = 100 * (i+1)
+        testdata[start:end] = np.loadtxt(f'label_{i}/sensordata_{i}.csv', delimiter=',', skiprows=1, usecols=(2,3,4), dtype=int)
+
 
 
 def random_avg_points():
@@ -99,9 +109,9 @@ def calc_new_avg():
         cumul = wonpoints_cumul[i, count - 1, :3]
         avgpoints[i, :] = cumul / count
         print("aaaaaa",avgpoints[i, :3])
-        
 
 
+getdata()
 random_avg_points()
 calc_dist()
 calc_new_avg()
@@ -131,7 +141,7 @@ for i in range(6):
         c=colors[i],
         label=labels[i],
         s=20,
-        alpha=0.2
+        alpha=0.1
     )
 
 for i in range(6):

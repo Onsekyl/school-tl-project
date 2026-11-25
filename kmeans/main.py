@@ -1,5 +1,7 @@
-import getdata
+import numpy as np
 
-label = 0
-groupid = 1
 
+
+sensordata = np.loadtxt('sensordata_0.csv', delimiter=',', skiprows=1, dtype=int)
+print(sensordata)
+print(sensordata.shape)
