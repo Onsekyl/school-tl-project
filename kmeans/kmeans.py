@@ -34,14 +34,27 @@ def random_avg_points():
 
     for i in range(len(avgpoints)):
         point = np.array([np.random.randint(MIN, MAX),
-                          np.random.randint(MIN, MAX),
-                          np.random.randint(MIN, MAX)])
-        
-        avgpoints[i,:] = np.array(point)
+                            np.random.randint(MIN, MAX),
+                            np.random.randint(MIN, MAX)])
+    
+    avgpoints[i,:] = np.array(point)
+        # print(avgpoints[i])
+
+
+def random_avg_point(newavg):
+    MIN = 1150
+    MAX = 2050
+
+    point = np.array([np.random.randint(MIN, MAX),
+                        np.random.randint(MIN, MAX),
+                        np.random.randint(MIN, MAX)])
+    
+    avgpoints[newavg,:] = np.array(point)
         # print(avgpoints[i])
 
 # https://www.geeksforgeeks.org/maths/3d-distance-formula/
 def calc_dist():
+    global wonpoints_cumul
     for i in range(len(testdata)):
         distances = np.zeros(6)
         for j in range(len(avgpoints)):
@@ -69,11 +82,29 @@ def calc_dist():
         wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :] = np.append(cumulative, wonpoints_count+1)
         print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
               f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
+    for k in range(len(avgpoints)):
+        count = int(np.max(wonpoints_cumul[k, :, 3]))
+        if(count == 0):
+            random_avg_point(k)
+            wonpoints_cumul = np.zeros((6, len(testdata), 4)) 
+            calc_dist()
+           
+         
+
+
+def calc_new_avg():
+    for i in range(len(avgpoints)):
+        count = int(np.max(wonpoints_cumul[i, :, 3]))
+        cumul = np.zeros(3)
+        cumul = wonpoints_cumul[i, count - 1, :3]
+        avgpoints[i, :] = cumul / count
+        print("aaaaaa",avgpoints[i, :3])
+        
 
 
 random_avg_points()
 calc_dist()
-
+calc_new_avg()
 
 colors = [
     'red', 'darkred', 'green', 'darkgreen',
@@ -100,7 +131,7 @@ for i in range(6):
         c=colors[i],
         label=labels[i],
         s=20,
-        alpha=0.7
+        alpha=0.2
     )
 
 for i in range(6):
@@ -128,4 +159,4 @@ ax.set_box_aspect([1, 1, 1])
 plt.tight_layout()
 
 # Linux: https://stackoverflow.com/questions/77507580/userwarning-figurecanvasagg-is-non-interactive-and-thus-cannot-be-shown-plt-sh#comment138759918_77644828
-# plt.show()
+plt.show()
