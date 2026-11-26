@@ -45,18 +45,18 @@ AXIS_MAX = 2500
 
 def random_avg_points():
     for i in range(len(avgpoints)):
-        point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
-                            np.random.randint(AXIS_MIN, AXIS_MAX),
-                            np.random.randint(AXIS_MIN, AXIS_MAX)])
+        point = np.array([  np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                            np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                            np.random.randint(AXIS_MIN, AXIS_MAX+1)])
     
     avgpoints[i,:] = point
         # print(avgpoints[i])
 
 
 def random_avg_point(i):
-    point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
-                        np.random.randint(AXIS_MIN, AXIS_MAX),
-                        np.random.randint(AXIS_MIN, AXIS_MAX)])
+    point = np.array([  np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                        np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                        np.random.randint(AXIS_MIN, AXIS_MAX+1)])
     
     avgpoints[i,:] = np.array(point)
         # print(avgpoints[i])
@@ -89,9 +89,11 @@ def calc_dist():
 
 
 def calc_new_avg():
+    global avgpoints
     for i in range(len(avgpoints)):
-        count = wonpoints_cumul[i, 3]
+        count = int(wonpoints_cumul[i, 3])
         avgpoints[i, :] = wonpoints_cumul[i, :3] / count
+        avgpoints = np.int_(np.round(avgpoints)) # https://www.geeksforgeeks.org/python/how-to-convert-numpy-array-of-floats-into-integers/#:~:text=Using%20np%2Eint%5F%28%29
         print(f"Final avgpoint {i}: {avgpoints[i, :3]} - won {count} measurements")
 
 
@@ -103,7 +105,7 @@ def arr_2d_to_c_file(array, filename:str, arrayname:str, dtype:str):
 
     with open(filename, "w", newline="", encoding="utf-8") as f:
         # Double curly braces in f-string: https://stackoverflow.com/a/5466478
-        f.write(f"{dtype} {arrayname}[{d1}][{d2}] = {{\n\t{{")
+        f.write(f"#pragma once\n\n{dtype} {arrayname}[{d1}][{d2}] = {{\n\t{{")
 
         for i in range(d1):
             for j in range(d2):
@@ -124,9 +126,9 @@ random_avg_points()
 calc_dist()
 calc_new_avg()
 
-# !! SECRET in the name ignores the file for git.
-# Remove it from the name when actually finalizing the file.
-arr_2d_to_c_file(avgpoints, "avgpoints_secret.h", "avgpoints", "double")
+# !! "secret" in the name ignores the file for git.
+# Rename the final file.
+arr_2d_to_c_file(avgpoints, "avgpoints_secret.h", "avgpoints", "static const int")
 
 
 colors = [
