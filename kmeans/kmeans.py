@@ -9,7 +9,8 @@ np.set_printoptions(suppress=True) # Disables scientific notation
 MIN_WON_POINTS = 75
 testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
-wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
+wonpoints_cumul = np.zeros((6, 4)) # 4 -> x, y, z, count
+
 
 # Hardcoded testdata and avgpoints for testing:
 # testdata 0-99 -> avgpoint 0, testdata 100-199 -> avgpoint 1 etc.
@@ -28,6 +29,7 @@ wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
 # avgpoints[4,:] = np.array((1600,1600,1900))
 # avgpoints[5,:] = np.array((1600,1600,1300))
 # avgpoints += 50*np.random.randn(6, 3)
+
 
 def getdata():
     global testdata
@@ -59,10 +61,12 @@ def random_avg_point(i):
     avgpoints[i,:] = np.array(point)
         # print(avgpoints[i])
 
+
 # https://www.geeksforgeeks.org/maths/3d-distance-formula/
 def calc_dist():
     global wonpoints_cumul
     for i in range(len(testdata)):
+
         distances = np.zeros(6)
         for j in range(len(avgpoints)):
             distances[j] = np.sqrt(np.sum(np.power(testdata[i] - avgpoints[j], 2)))
@@ -71,42 +75,23 @@ def calc_dist():
         # print(f"The closest avgpoint to measurement {i} is at index {closest_avgpoint_i}"
         #       f" with the distance of {distances[closest_avgpoint_i]}")
 
-        wonpoints_count = int(np.max(wonpoints_cumul[closest_avgpoint_i, :, 3]))
-        # print(wonpoints_count)
-
-        cumulative = np.zeros(3)
-        if (wonpoints_count > 0):
-            cumulative = testdata[i] + wonpoints_cumul[closest_avgpoint_i, wonpoints_count-1, :3]
-        elif (wonpoints_count == 0):
-            cumulative = testdata[i]
-
-        # Cumulation check
-        # if (wonpoints_count < 3 and wonpoints_count > 0):
-        #     print(f"{wonpoints_count} {testdata[i]}\n+ {wonpoints[closest_avgpoint_i, wonpoints_count-1, :3]}"
-        #           f"\n= {cumulative}\n")
-
-        # https://www.geeksforgeeks.org/python/numpy-append-python/
-        wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :] = np.append(cumulative, wonpoints_count+1)
-        # print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
-        #       f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
+        wonpoints_cumul[closest_avgpoint_i, :3] += testdata[i]
+        wonpoints_cumul[closest_avgpoint_i, 3] += 1
+        # print(f"wonpoints_cumul[{closest_avgpoint_i}] new values: {wonpoints_cumul[closest_avgpoint_i, :]}")
 
     for k in range(len(avgpoints)):
-        count = int(np.max(wonpoints_cumul[k, :, 3]))
+        count = wonpoints_cumul[k, 3]
         if(count < MIN_WON_POINTS):
             print(f"avgpoint {k} did not won enough points. Moving it and recalculating...")
             random_avg_point(k)
-            wonpoints_cumul = np.zeros((6, len(testdata), 4)) 
-            calc_dist()
-           
-         
+            wonpoints_cumul[:, :] = 0
+            calc_dist()           
 
 
 def calc_new_avg():
     for i in range(len(avgpoints)):
-        count = int(np.max(wonpoints_cumul[i, :, 3]))
-        cumul = np.zeros(3)
-        cumul = wonpoints_cumul[i, count - 1, :3]
-        avgpoints[i, :] = cumul / count
+        count = wonpoints_cumul[i, 3]
+        avgpoints[i, :] = wonpoints_cumul[i, :3] / count
         print(f"Final avgpoint {i}: {avgpoints[i, :3]} - won {count} measurements")
 
 
@@ -132,6 +117,7 @@ def arr_2d_to_c_file(array, filename:str, arrayname:str, dtype:str):
                 else:
                     f.write(" },\n};")
         f.close()
+
 
 getdata()
 random_avg_points()
