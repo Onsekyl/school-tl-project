@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
 
 # https://stackoverflow.com/a/2891805
 np.set_printoptions(precision = 2) # Limits the decimals to the value
@@ -7,12 +8,13 @@ np.set_printoptions(suppress=True) # Disables scientific notation
 
 
 MIN_WON_POINTS = 75
-testdata  = np.zeros((600, 3))
 avgpoints = np.zeros((6, 3))
-wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
+wonpoints_cumul = np.zeros((6, 4)) # 4 -> x, y, z, count
+
 
 # Hardcoded testdata and avgpoints for testing:
 # testdata 0-99 -> avgpoint 0, testdata 100-199 -> avgpoint 1 etc.
+# testdata  = np.zeros((600, 3))
 # testdata[0:100,:]   = np.array((1900,1600,1600))
 # testdata[100:200,:] = np.array((1300,1600,1600))
 # testdata[200:300,:] = np.array((1600,1900,1600))
@@ -29,40 +31,51 @@ wonpoints_cumul = np.zeros((6, len(testdata), 4)) # 4 -> x, y, z, count
 # avgpoints[5,:] = np.array((1600,1600,1300))
 # avgpoints += 50*np.random.randn(6, 3)
 
-def getdata():
+
+def init_testdata():
     global testdata
-    for i in range(6):
-        start = 100 * i
-        end = 100 * (i+1)
-        testdata[start:end] = np.loadtxt(f'label_{i}/sensordata_{i}.csv', delimiter=',', skiprows=1, usecols=(2,3,4), dtype=int)
+    ROWS_PER_FILE = 100
+    
+    filelist = sorted(glob.glob('*[0-5]/sensordata_*')) # https://stackoverflow.com/a/3348761
+    # print(filelist)
+    len_filelist = len(filelist)
+
+    testdata = np.zeros((ROWS_PER_FILE * len_filelist, 3))
+
+    for i in range(len_filelist):
+        start = ROWS_PER_FILE * i
+        end = ROWS_PER_FILE * (i+1)
+        testdata[start:end] = np.loadtxt(filelist[i], delimiter=',', skiprows=1, usecols=(2,3,4), dtype=int)
 
 
 
 AXIS_MIN = 700
 AXIS_MAX = 2500
 
-def random_avg_points():
+def random_avgpoints():
     for i in range(len(avgpoints)):
-        point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
-                            np.random.randint(AXIS_MIN, AXIS_MAX),
-                            np.random.randint(AXIS_MIN, AXIS_MAX)])
+        point = np.array([  np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                            np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                            np.random.randint(AXIS_MIN, AXIS_MAX+1)])
     
     avgpoints[i,:] = point
         # print(avgpoints[i])
 
 
-def random_avg_point(i):
-    point = np.array([np.random.randint(AXIS_MIN, AXIS_MAX),
-                        np.random.randint(AXIS_MIN, AXIS_MAX),
-                        np.random.randint(AXIS_MIN, AXIS_MAX)])
+def random_avgpoint(i):
+    point = np.array([  np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                        np.random.randint(AXIS_MIN, AXIS_MAX+1),
+                        np.random.randint(AXIS_MIN, AXIS_MAX+1)])
     
     avgpoints[i,:] = np.array(point)
         # print(avgpoints[i])
 
+
 # https://www.geeksforgeeks.org/maths/3d-distance-formula/
-def calc_dist():
+def calc_dist_cumul():
     global wonpoints_cumul
     for i in range(len(testdata)):
+
         distances = np.zeros(6)
         for j in range(len(avgpoints)):
             distances[j] = np.sqrt(np.sum(np.power(testdata[i] - avgpoints[j], 2)))
@@ -71,58 +84,41 @@ def calc_dist():
         # print(f"The closest avgpoint to measurement {i} is at index {closest_avgpoint_i}"
         #       f" with the distance of {distances[closest_avgpoint_i]}")
 
-        wonpoints_count = int(np.max(wonpoints_cumul[closest_avgpoint_i, :, 3]))
-        # print(wonpoints_count)
-
-        cumulative = np.zeros(3)
-        if (wonpoints_count > 0):
-            cumulative = testdata[i] + wonpoints_cumul[closest_avgpoint_i, wonpoints_count-1, :3]
-        elif (wonpoints_count == 0):
-            cumulative = testdata[i]
-
-        # Cumulation check
-        # if (wonpoints_count < 3 and wonpoints_count > 0):
-        #     print(f"{wonpoints_count} {testdata[i]}\n+ {wonpoints[closest_avgpoint_i, wonpoints_count-1, :3]}"
-        #           f"\n= {cumulative}\n")
-
-        # https://www.geeksforgeeks.org/python/numpy-append-python/
-        wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :] = np.append(cumulative, wonpoints_count+1)
-        # print(f"avgpoint {closest_avgpoint_i} won measurement {i}: "
-        #       f"{wonpoints_cumul[closest_avgpoint_i, wonpoints_count, :]}")
+        wonpoints_cumul[closest_avgpoint_i, :3] += testdata[i]
+        wonpoints_cumul[closest_avgpoint_i, 3] += 1
+        # print(f"wonpoints_cumul[{closest_avgpoint_i}] new values: {wonpoints_cumul[closest_avgpoint_i, :]}")
 
     for k in range(len(avgpoints)):
-        count = int(np.max(wonpoints_cumul[k, :, 3]))
+        count = wonpoints_cumul[k, 3]
         if(count < MIN_WON_POINTS):
             print(f"avgpoint {k} did not won enough points. Moving it and recalculating...")
-            random_avg_point(k)
-            wonpoints_cumul = np.zeros((6, len(testdata), 4)) 
-            calc_dist()
-           
-         
+            random_avgpoint(k)
+            wonpoints_cumul[:, :] = 0
+            calc_dist_cumul()           
 
 
-def calc_new_avg():
+def calc_final_avgpoints():
+    global avgpoints
     for i in range(len(avgpoints)):
-        count = int(np.max(wonpoints_cumul[i, :, 3]))
-        cumul = np.zeros(3)
-        cumul = wonpoints_cumul[i, count - 1, :3]
-        avgpoints[i, :] = cumul / count
+        count = int(wonpoints_cumul[i, 3])
+        avgpoints[i, :] = wonpoints_cumul[i, :3] / count
+        avgpoints = np.int_(np.round(avgpoints)) # https://www.geeksforgeeks.org/python/how-to-convert-numpy-array-of-floats-into-integers/#:~:text=Using%20np%2Eint%5F%28%29
         print(f"Final avgpoint {i}: {avgpoints[i, :3]} - won {count} measurements")
 
 
 
-def arr_2d_to_c_file(array, filename:str, arrayname:str, dtype:str):
-    d1 = array.shape[0]
-    d2 = array.shape[1]
+def arr_2d_to_c_file(array_in, filename_out:str, arrayname_out:str, dtype_out:str):
+    d1 = array_in.shape[0]
+    d2 = array_in.shape[1]
     # print("shapes: ", d1, d2)
 
-    with open(filename, "w", newline="", encoding="utf-8") as f:
+    with open(filename_out, "w", newline="", encoding="utf-8") as f:
         # Double curly braces in f-string: https://stackoverflow.com/a/5466478
-        f.write(f"{dtype} {arrayname}[{d1}][{d2}] = {{\n\t{{")
+        f.write(f"#pragma once\n\n{dtype_out} {arrayname_out}[{d1}][{d2}] = {{\n\t{{")
 
         for i in range(d1):
             for j in range(d2):
-                f.write(f" {array[i, j]}")
+                f.write(f" {array_in[i, j]}")
 
                 # This is just formatting; works with C straight away.
                 if j < d2-1:
@@ -133,14 +129,15 @@ def arr_2d_to_c_file(array, filename:str, arrayname:str, dtype:str):
                     f.write(" },\n};")
         f.close()
 
-getdata()
-random_avg_points()
-calc_dist()
-calc_new_avg()
 
-# !! SECRET in the name ignores the file for git.
-# Remove it from the name when actually finalizing the file.
-arr_2d_to_c_file(avgpoints, "avgpoints_secret.h", "avgpoints", "double")
+init_testdata()
+random_avgpoints()
+calc_dist_cumul()
+calc_final_avgpoints()
+
+# !! "secret" in the name ignores the file for git.
+# Rename the final file.
+arr_2d_to_c_file(avgpoints, "avgpoints_secret.h", "avgpoints", "static const int")
 
 
 colors = [
